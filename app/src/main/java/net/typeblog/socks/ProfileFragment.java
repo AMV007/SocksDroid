@@ -23,10 +23,12 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import net.typeblog.socks.util.NotificationUtils;
 import net.typeblog.socks.util.Profile;
 import net.typeblog.socks.util.ProfileManager;
 import net.typeblog.socks.util.Utility;
 
+import java.io.File;
 import java.util.Locale;
 
 import static net.typeblog.socks.util.Constants.*;
@@ -69,9 +71,11 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
     };
     private IVpnService mBinder;
 
+    private Preference mPrefAppList;
+
     private ListPreference mPrefProfile, mPrefRoutes;
     private EditTextPreference mPrefServer, mPrefPort, mPrefUsername, mPrefPassword,
-            mPrefDns, mPrefDnsPort, mPrefAppList, mPrefUDPGW;
+            mPrefDns, mPrefDnsPort,  mPrefUDPGW;
     private CheckBoxPreference mPrefUserpw, mPrefPerApp, mPrefAppBypass, mPrefIPv6, mPrefUDP, mPrefAuto;
 
     @Override
@@ -105,6 +109,9 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         } else if (id == R.id.prof_del) {
             removeProfile();
             return true;
+        } else if (id == R.id.clean_cache) {
+            cleanDnsCache();
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -112,6 +119,10 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
 
     @Override
     public boolean onPreferenceClick(Preference p) {
+        if (p==mPrefAppList){
+            goToAppList();
+            return true;
+        }
         // TODO: Implement this method
         return false;
     }
@@ -219,8 +230,9 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         mPrefDnsPort = (EditTextPreference) findPreference(PREF_ADV_DNS_PORT);
         mPrefPerApp = (CheckBoxPreference) findPreference(PREF_ADV_PER_APP);
         mPrefAppBypass = (CheckBoxPreference) findPreference(PREF_ADV_APP_BYPASS);
-        mPrefAppList = (EditTextPreference) findPreference(PREF_ADV_APP_LIST);
+        mPrefAppList = (Preference) findPreference(PREF_ADV_APP_LIST);
         mPrefIPv6 = (CheckBoxPreference) findPreference(PREF_IPV6_PROXY);
+
         mPrefUDP = (CheckBoxPreference) findPreference(PREF_UDP_PROXY);
         mPrefUDPGW = (EditTextPreference) findPreference(PREF_UDP_GW);
         mPrefAuto = (CheckBoxPreference) findPreference(PREF_ADV_AUTO_CONNECT);
@@ -236,11 +248,21 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         mPrefDnsPort.setOnPreferenceChangeListener(this);
         mPrefPerApp.setOnPreferenceChangeListener(this);
         mPrefAppBypass.setOnPreferenceChangeListener(this);
-        mPrefAppList.setOnPreferenceChangeListener(this);
+        //mPrefAppList.setOnPreferenceChangeListener(this);
         mPrefIPv6.setOnPreferenceChangeListener(this);
         mPrefUDP.setOnPreferenceChangeListener(this);
         mPrefUDPGW.setOnPreferenceChangeListener(this);
         mPrefAuto.setOnPreferenceChangeListener(this);
+
+        mPrefAppList.setOnPreferenceClickListener(this);
+    }
+
+    private void goToAppList() {
+        getFragmentManager()
+                .beginTransaction()
+                .replace(android.R.id.content, new AppListFragment())
+                .addToBackStack(null).commit();
+
     }
 
     private void reload() {
@@ -270,7 +292,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         mPrefUDPGW.setText(mProfile.getUDPGW());
         resetText(mPrefServer, mPrefPort, mPrefUsername, mPrefPassword, mPrefDns, mPrefDnsPort, mPrefUDPGW);
 
-        mPrefAppList.setText(mProfile.getAppList());
+        //mPrefAppList.setText(mProfile.getAppList());
     }
 
     private void resetList(ListPreference... pref) {
@@ -289,7 +311,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             } else {
                 if (p.getText().length() > 0)
                     p.setSummary(String.format(Locale.US,
-                            String.format(Locale.US, "%%0%dd", p.getText().length()), 0)
+                                    String.format(Locale.US, "%%0%dd", p.getText().length()), 0)
                             .replace("0", "*"));
                 else
                     p.setSummary("");
@@ -304,10 +326,17 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             String text = newValue.toString();
             if (text.length() > 0)
                 pref.setSummary(String.format(Locale.US,
-                        String.format(Locale.US, "%%0%dd", text.length()), 0)
+                                String.format(Locale.US, "%%0%dd", text.length()), 0)
                         .replace("0", "*"));
             else
                 pref.setSummary("");
+        }
+    }
+
+    private void cleanDnsCache() {
+        File f = new File(getActivity().getFilesDir(), "pdnsd.cache");
+        if (f.exists()) {
+            f.delete();
         }
     }
 
@@ -401,6 +430,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
 
     private void startVpn() {
         mStarting = true;
+        NotificationUtils.requestNotificationPermission(getActivity());
         Intent i = VpnService.prepare(getActivity());
 
         if (i != null) {

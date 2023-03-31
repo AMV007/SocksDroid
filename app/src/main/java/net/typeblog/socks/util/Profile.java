@@ -4,6 +4,9 @@ import android.content.SharedPreferences;
 
 import static net.typeblog.socks.util.Constants.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Profile {
     private final SharedPreferences mPref;
     private final String mName;
@@ -101,6 +104,18 @@ public class Profile {
 
     public String getAppList() {
         return mPref.getString(key("applist"), "");
+    }
+
+    public Set<String> getAppSets() {
+        Set<String> apps = new HashSet<>();
+        String[] applists = mPref.getString(key("applist"), "").split("[\n,]");
+        for (String item : applists) {
+            if (item != null && !item.trim().isEmpty()) {
+                apps.add(item);
+            }
+        }
+        return apps;
+
     }
 
     public void setAppList(String list) {

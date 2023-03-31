@@ -4,19 +4,31 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import net.typeblog.socks.R;
 import net.typeblog.socks.SocksVpnService;
+
 import static net.typeblog.socks.util.Constants.*;
 
 public class Utility {
     private static final String TAG = Utility.class.getSimpleName();
+
+
+
 
     public static int exec(String cmd) {
         try {
@@ -27,6 +39,7 @@ public class Utility {
             return -1;
         }
     }
+
 
     public static void killPidFile(String f) {
         File file = new File(f);
@@ -58,7 +71,7 @@ public class Utility {
         try {
             int pid = Integer.parseInt(str.toString().trim().replace("\n", ""));
             Runtime.getRuntime().exec("kill " + pid).waitFor();
-            if(!file.delete())
+            if (!file.delete())
                 Log.w(TAG, "failed to delete pidfile");
         } catch (Exception e) {
             e.printStackTrace();
@@ -86,7 +99,7 @@ public class Utility {
         File f = new File(context.getFilesDir() + "/pdnsd.conf");
 
         if (f.exists()) {
-            if(!f.delete())
+            if (!f.delete())
                 Log.w(TAG, "failed to delete pdnsd.conf");
         }
 
@@ -103,7 +116,7 @@ public class Utility {
 
         if (!cache.exists()) {
             try {
-                if(!cache.createNewFile())
+                if (!cache.createNewFile())
                     Log.w(TAG, "failed to create pdnsd.cache");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -129,7 +142,7 @@ public class Utility {
 
         if (profile.isPerApp()) {
             i.putExtra(INTENT_APP_BYPASS, profile.isBypassApp())
-                    .putExtra(INTENT_APP_LIST, profile.getAppList().split("\n"));
+                    .putExtra(INTENT_APP_LIST, profile.getAppList().split("[\n,]"));
         }
 
         if (profile.hasUDP()) {

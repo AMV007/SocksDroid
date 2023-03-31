@@ -12,9 +12,12 @@ import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
 
+import net.typeblog.socks.util.NotificationUtils;
 import net.typeblog.socks.util.Routes;
 import net.typeblog.socks.util.Utility;
+import net.typeblog.socks.util.VpnConstans;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -69,6 +72,8 @@ public class SocksVpnService extends VpnService {
         final boolean ipv6 = intent.getBooleanExtra(INTENT_IPV6_PROXY, false);
         final String udpgw = intent.getStringExtra(INTENT_UDP_GW);
 
+        Log.e(TAG, Arrays.toString(appList));
+
         // Notifications on Oreo and above need a channel
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= 26) {
@@ -88,16 +93,17 @@ public class SocksVpnService extends VpnService {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             intentFlags |= PendingIntent.FLAG_IMMUTABLE;
         }
-        PendingIntent contentIntent;
-        contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), intentFlags);
-        startForeground(NOTIFICATION_ID, builder
-                .setContentTitle(getString(R.string.notify_title))
-                .setContentText(String.format(getString(R.string.notify_msg), name))
-                .setPriority(Notification.PRIORITY_MIN)
-                .setSmallIcon(R.drawable.ic_vpn)
-                .setContentIntent(contentIntent)
-                .build());
+//        PendingIntent contentIntent;
+//        contentIntent = PendingIntent.getActivity(this, 0,
+//                new Intent(this, MainActivity.class), intentFlags);
+//        startForeground(NOTIFICATION_ID, builder
+//                .setContentTitle(getString(R.string.notify_title))
+//                .setContentText(String.format(getString(R.string.notify_msg), name))
+//                .setPriority(Notification.PRIORITY_MIN)
+//                .setSmallIcon(R.drawable.ic_vpn)
+//                .setContentIntent(contentIntent)
+//                .build());
+        NotificationUtils.startForegroundService(this);
 
         // Create an fd.
         configure(name, route, perApp, appBypass, appList, ipv6);
@@ -105,8 +111,13 @@ public class SocksVpnService extends VpnService {
         if (DEBUG)
             Log.d(TAG, "fd: " + mInterface.getFd());
 
-        if (mInterface != null)
+        if (mInterface != null){
+            NotificationUtils.updateNotification(getString(R.string.notify_title),String.format(getString(R.string.notify_msg), name));
             start(mInterface.getFd(), server, port, username, passwd, dns, dnsPort, ipv6, udpgw);
+        }else {
+            NotificationUtils.updateNotification(getString(R.string.notify_title),"mInterface is null");
+        }
+
 
         return START_STICKY;
     }
@@ -147,15 +158,18 @@ public class SocksVpnService extends VpnService {
 
     private void configure(String name, String route, boolean perApp, boolean bypass, String[] apps, boolean ipv6) {
         Builder b = new Builder();
-        b.setMtu(1500)
+        b.setMtu(VpnConstans.VPN_MTU)
                 .setSession(name)
-                .addAddress("26.26.26.1", 24)
+                //.addAddress("26.26.26.1", 24)
+                .addAddress(VpnConstans.PRIVATE_VLAN4_CLIENT, 30)
                 .addDnsServer("8.8.8.8");
 
         if (ipv6) {
             // Route all IPv6 traffic
-            b.addAddress("fdfe:dcba:9876::1", 126)
-                    .addRoute("::", 0);
+            //b.addAddress("fdfe:dcba:9876::1", 126)
+                   // .addRoute("::", 0);
+            b.addAddress(VpnConstans.PRIVATE_VLAN6_CLIENT, 126);
+            b.addRoute("2000::", 3);
         }
 
         Routes.addRoutes(this, b, route);
@@ -206,24 +220,45 @@ public class SocksVpnService extends VpnService {
                 }
             }
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            b.setMetered(false);
+        }
 
         mInterface = b.establish();
     }
 
+    private void runTun2socks() {
+
+    }
+
     private void start(int fd, String server, int port, String user, String passwd, String dns, int dnsPort, boolean ipv6, String udpgw) {
+        //protect(fd);
         // Start DNS daemon first
         Utility.makePdnsdConf(this, dns, dnsPort);
 
         Utility.exec(String.format(Locale.US, "%s/libpdnsd.so -c %s/pdnsd.conf",
                 getApplicationInfo().nativeLibraryDir, getFilesDir()));
 
+
+//        try {
+//            Utility.runTun2Socs(this, fd, server, port, user, passwd, ipv6, udpgw, () -> {
+//                stopMe();
+//                mRunning=false;
+//            });
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            stopMe();
+//            return;
+//        }
+
+
         String command = String.format(Locale.US,
-                "%s/libtun2socks.so --netif-ipaddr 26.26.26.2"
-                        + " --netif-netmask 255.255.255.0"
+                "%s/libtun2socks.so --netif-ipaddr "+ VpnConstans.PRIVATE_VLAN4_ROUTER
+                        + " --netif-netmask "+ VpnConstans.NET_MASK//255.255.255.0"
                         + " --socks-server-addr %s:%d"
                         + " --tunfd %d"
-                        + " --tunmtu 1500"
-                        + " --loglevel 3"
+                        + " --tunmtu "+VpnConstans.VPN_MTU
+                        + " --loglevel notice"
                         + " --pid %s/tun2socks.pid"
                         + " --sock %s/sock_path"
                 , getApplicationInfo().nativeLibraryDir, server, port, fd, getFilesDir(), getApplicationInfo().dataDir);
@@ -234,7 +269,7 @@ public class SocksVpnService extends VpnService {
         }
 
         if (ipv6) {
-            command += " --netif-ip6addr fdfe:dcba:9876::2";
+            command += " --netif-ip6addr "+ VpnConstans.PRIVATE_VLAN6_ROUTER;
         }
 
         command += " --dnsgw 26.26.26.1:8091";
@@ -265,6 +300,7 @@ public class SocksVpnService extends VpnService {
             try {
                 Thread.sleep(1000L * i);
             } catch (Exception e) {
+
                 e.printStackTrace();
             }
         }

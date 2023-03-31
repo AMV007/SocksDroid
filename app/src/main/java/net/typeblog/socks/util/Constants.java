@@ -2,6 +2,8 @@ package net.typeblog.socks.util;
 
 public class Constants
 {
+
+
     public static final String ROUTE_ALL = "all",
             ROUTE_CHN = "chn";
 

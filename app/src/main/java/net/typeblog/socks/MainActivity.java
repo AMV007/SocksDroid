@@ -9,5 +9,5 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         this.getFragmentManager().beginTransaction().replace(android.R.id.content, new ProfileFragment()).commit();
-    }
+        }
 }
