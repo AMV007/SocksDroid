@@ -14,4 +14,8 @@
         android:showAsAction="always"
         android:actionLayout="@layout/action_switch"/>
 
+    <item
+        android:id="@+id/clean_cache"
+        android:title="Clean Cache"/>
+
 </menu>

@@ -1,13 +1,18 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
     defaultConfig {
         applicationId "net.typeblog.socks"
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode 13
         versionName "1.0.4"
+        externalNativeBuild {
+//            ndkBuild {
+//                arguments "-j${Runtime.runtime.availableProcessors()}"
+//            }
+        }
     }
     buildTypes {
         release {
@@ -15,6 +20,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+//    externalNativeBuild {
+//       ndkBuild.path "src/main/jni/Android.mk"
+//    }
 }
 
 dependencies {

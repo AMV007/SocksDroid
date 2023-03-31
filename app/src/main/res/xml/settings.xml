@@ -94,7 +94,7 @@
             android:summary="@string/adv_app_bypass_sum"
             android:dependency="adv_per_app"/>
 
-        <EditTextPreference
+        <Preference
             android:key="adv_app_list"
             android:title="@string/adv_app_list"
             android:summary="@string/adv_app_list_sum"
