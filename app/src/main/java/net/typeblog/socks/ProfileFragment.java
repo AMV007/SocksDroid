@@ -72,7 +72,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
     private ListPreference mPrefProfile, mPrefRoutes;
     private EditTextPreference mPrefServer, mPrefPort, mPrefUsername, mPrefPassword,
             mPrefDns, mPrefDnsPort, mPrefAppList, mPrefUDPGW;
-    private CheckBoxPreference mPrefUserpw, mPrefPerApp, mPrefAppBypass, mPrefIPv6, mPrefUDP, mPrefAuto;
+    private CheckBoxPreference mPrefUserpw, mPrefPerApp, mPrefAppBypass, mPrefIPv6, mPrefUDP, mPrefAuto, mStartVpn;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +90,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         inflater.inflate(R.menu.main, menu);
 
         MenuItem s = menu.findItem(R.id.switch_main);
+
         mSwitch = s.getActionView().findViewById(R.id.switch_action_button);
         mSwitch.setOnCheckedChangeListener(this);
         mSwitch.postDelayed(mStateRunnable, 1000);
@@ -118,6 +119,16 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
 
     @Override
     public boolean onPreferenceChange(Preference p, Object newValue) {
+        if (p == mStartVpn) {
+            if (!mStartVpn.isChecked()) {
+                startVpn();
+            } else {
+                stopVpn();
+            }
+
+            return true;
+        }
+
         if (p == mPrefProfile) {
             String name = newValue.toString();
             mProfile = mManager.getProfile(name);
@@ -224,6 +235,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         mPrefUDP = (CheckBoxPreference) findPreference(PREF_UDP_PROXY);
         mPrefUDPGW = (EditTextPreference) findPreference(PREF_UDP_GW);
         mPrefAuto = (CheckBoxPreference) findPreference(PREF_ADV_AUTO_CONNECT);
+        mStartVpn = (CheckBoxPreference) findPreference("switch_on_main");
 
         mPrefProfile.setOnPreferenceChangeListener(this);
         mPrefServer.setOnPreferenceChangeListener(this);
@@ -241,6 +253,11 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         mPrefUDP.setOnPreferenceChangeListener(this);
         mPrefUDPGW.setOnPreferenceChangeListener(this);
         mPrefAuto.setOnPreferenceChangeListener(this);
+        mStartVpn.setOnPreferenceChangeListener(this);
+
+        checkState();
+
+
     }
 
     private void reload() {
@@ -271,6 +288,8 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         resetText(mPrefServer, mPrefPort, mPrefUsername, mPrefPassword, mPrefDns, mPrefDnsPort, mPrefUDPGW);
 
         mPrefAppList.setText(mProfile.getAppList());
+
+        checkState();
     }
 
     private void resetList(ListPreference... pref) {
@@ -363,8 +382,9 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
 
     private void checkState() {
         mRunning = false;
-        mSwitch.setEnabled(false);
-        mSwitch.setOnCheckedChangeListener(null);
+        mStartVpn.setChecked(false);
+//        mSwitch.setEnabled(false);
+//        mSwitch.setOnCheckedChangeListener(null);
 
         if (mBinder == null) {
             getActivity().bindService(new Intent(getActivity(), SocksVpnService.class), mConnection, 0);
@@ -382,10 +402,12 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             }
         }
 
-        mSwitch.setChecked(mRunning);
+//        mSwitch.setChecked(mRunning);
+        mStartVpn.setChecked(mRunning);
 
         if ((!mStarting && !mStopping) || (mStarting && mRunning) || (mStopping && !mRunning)) {
-            mSwitch.setEnabled(true);
+//            mSwitch.setEnabled(true);
+            mStartVpn.setChecked(true);
         }
 
         if (mStarting && mRunning) {
@@ -396,7 +418,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             mStopping = false;
         }
 
-        mSwitch.setOnCheckedChangeListener(ProfileFragment.this);
+//        mSwitch.setOnCheckedChangeListener(ProfileFragment.this);
     }
 
     private void startVpn() {
