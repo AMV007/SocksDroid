@@ -380,7 +380,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
 
     private void checkState() {
         mRunning = false;
-        mStartVpn.setEnabled(false);
+        //mStartVpn.setEnabled(false);
         //mSwitch.setEnabled(false);
         //mSwitch.setOnCheckedChangeListener(null);
 

@@ -13,4 +13,5 @@
 .externalNativeBuild
 *~
 *.apk
+app/release
 app/debug
