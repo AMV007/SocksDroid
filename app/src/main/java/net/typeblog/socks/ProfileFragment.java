@@ -256,8 +256,6 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
         mStartVpn.setOnPreferenceChangeListener(this);
 
         checkState();
-
-
     }
 
     private void reload() {
@@ -382,9 +380,9 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
 
     private void checkState() {
         mRunning = false;
-        mStartVpn.setChecked(false);
-//        mSwitch.setEnabled(false);
-//        mSwitch.setOnCheckedChangeListener(null);
+        mStartVpn.setEnabled(false);
+        //mSwitch.setEnabled(false);
+        //mSwitch.setOnCheckedChangeListener(null);
 
         if (mBinder == null) {
             getActivity().bindService(new Intent(getActivity(), SocksVpnService.class), mConnection, 0);
@@ -402,12 +400,12 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             }
         }
 
-//        mSwitch.setChecked(mRunning);
+        mSwitch.setChecked(mRunning);
         mStartVpn.setChecked(mRunning);
 
         if ((!mStarting && !mStopping) || (mStarting && mRunning) || (mStopping && !mRunning)) {
-//            mSwitch.setEnabled(true);
-            mStartVpn.setChecked(true);
+            mSwitch.setEnabled(true);
+            mStartVpn.setEnabled(true);
         }
 
         if (mStarting && mRunning) {
@@ -418,7 +416,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             mStopping = false;
         }
 
-//        mSwitch.setOnCheckedChangeListener(ProfileFragment.this);
+        mSwitch.setOnCheckedChangeListener(ProfileFragment.this);
     }
 
     private void startVpn() {
