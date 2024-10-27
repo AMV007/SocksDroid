@@ -7,6 +7,7 @@
     <string name="prof_default">Default</string>
 
     <string name="connection">Connection</string>
+    <string name="enable_disable_VPN">Enable/Disable VPN</string>
     <string name="server_ip">Server IP</string>
     <string name="server_port">Server Port</string>
     <string name="ipv6_proxy">IPv6</string>
