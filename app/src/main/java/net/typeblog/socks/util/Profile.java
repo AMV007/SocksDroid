@@ -84,7 +84,7 @@ public class Profile {
     }
 
     public boolean isPerApp() {
-        return mPref.getBoolean(key("perapp"), false);
+        return mPref.getBoolean(key("perapp"), true);
     }
 
     public void setIsPerApp(boolean is) {
@@ -92,7 +92,7 @@ public class Profile {
     }
 
     public boolean isBypassApp() {
-        return mPref.getBoolean(key("appbypass"), false);
+        return mPref.getBoolean(key("appbypass"), true);
     }
 
     public void setIsBypassApp(boolean is) {
@@ -100,7 +100,7 @@ public class Profile {
     }
 
     public String getAppList() {
-        return mPref.getString(key("applist"), "");
+        return mPref.getString(key("applist"), "com.mxtech.videoplayer.ad\norg.videolan.vlc");
     }
 
     public void setAppList(String list) {
