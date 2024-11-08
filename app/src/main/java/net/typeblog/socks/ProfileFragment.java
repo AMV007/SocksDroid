@@ -400,7 +400,7 @@ public class ProfileFragment extends PreferenceFragment implements Preference.On
             }
         }
 
-        mSwitch.setChecked(mRunning);
+        if (mSwitch!=null) mSwitch.setChecked(mRunning);
         mStartVpn.setChecked(mRunning);
 
         if ((!mStarting && !mStopping) || (mStarting && mRunning) || (mStopping && !mRunning)) {
